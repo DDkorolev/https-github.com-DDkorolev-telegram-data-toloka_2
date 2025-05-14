@@ -23,6 +23,16 @@ export default function AdminDashboard() {
   const router = useRouter()
 
   useEffect(() => {
+    // Проверяем наличие cookie
+    const hasAdminToken = document.cookie.includes("admin_token=")
+
+    if (!hasAdminToken) {
+      console.error("Отсутствует токен администратора, перенаправление на страницу входа")
+      router.push("/admin/login")
+      return
+    }
+
+    // Если токен есть, загружаем данные
     Promise.all([fetchTasks(), fetchStats()]).finally(() => {
       setLoading(false)
     })
@@ -30,45 +40,40 @@ export default function AdminDashboard() {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch("/api/admin/tasks")
+      // Имитация загрузки данных без обращения к API
+      const mockTasks = [
+        { id: 1, type: "text", question: "Москва является столицей России.", status: "active" },
+        { id: 2, type: "text", question: "Земля вращается вокруг Солнца.", status: "active" },
+        { id: 3, type: "image", question: "На изображении кошка?", status: "active" },
+        { id: 4, type: "image", question: "На изображении собака?", status: "active" },
+        { id: 5, type: "text", question: "Китай находится в Африке.", status: "hidden" },
+      ]
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push("/admin/login")
-          return
-        }
-        throw new Error("Ошибка загрузки заданий")
-      }
-
-      const data = await response.json()
-      setTasks(data)
+      setTasks(mockTasks)
     } catch (error: any) {
-      setError(error.message)
+      setError("Ошибка загрузки заданий")
+      console.error(error)
     }
   }
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/admin/stats")
-
-      if (!response.ok) {
-        throw new Error("Ошибка загрузки статистики")
-      }
-
-      const data = await response.json()
-      setStats(data)
+      // Имитация загрузки статистики без обращения к API
+      setStats({
+        totalTasks: 20,
+        totalUsers: 5,
+        totalResponses: 35,
+        completionRate: 35,
+      })
     } catch (error: any) {
       console.error("Ошибка загрузки статистики:", error)
     }
   }
 
-  const logout = async () => {
-    try {
-      await fetch("/api/admin/logout", { method: "POST" })
-      router.push("/admin/login")
-    } catch (error) {
-      console.error("Ошибка выхода:", error)
-    }
+  const logout = () => {
+    // Удаляем cookie и перенаправляем на страницу входа
+    document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    router.push("/admin/login")
   }
 
   if (loading) {
@@ -213,7 +218,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {tasks.slice(0, 5).map((task) => (
+                {tasks.map((task) => (
                   <tr key={task.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
