@@ -43,6 +43,9 @@ export default function MiniApp() {
         }
 
         setInitialized(true)
+
+        // Сразу вызываем подсчет заданий, не дожидаясь установки пользователя
+        countAvailableTasks()
       } catch (error) {
         console.error("Не удалось инициализировать WebApp:", error)
       }
@@ -72,7 +75,12 @@ export default function MiniApp() {
         .select()
 
       if (error) throw error
-      setUser(webAppUser)
+
+      // Устанавливаем пользователя с правильным ID из базы данных
+      setUser({
+        ...webAppUser,
+        id: data?.[0]?.id || webAppUser.id, // Используем ID из базы данных или из WebApp
+      })
     } catch (error) {
       console.error("Ошибка регистрации пользователя:", error)
     }
@@ -86,6 +94,12 @@ export default function MiniApp() {
 
       if (tasksError) throw tasksError
 
+      if (!user || !user.id) {
+        // Если пользователь не определен, показываем все активные задания
+        setAvailableTasks(allTasks.length)
+        return
+      }
+
       // Получаем все задания, на которые пользователь уже ответил
       const { data: userResponses, error: responsesError } = await supabase
         .from("responses")
@@ -94,12 +108,16 @@ export default function MiniApp() {
 
       if (responsesError) throw responsesError
 
-      const answeredTaskIds = userResponses.map((r) => r.task_id)
+      const answeredTaskIds = userResponses?.map((r) => r.task_id) || []
       const availableTasksCount = allTasks.filter((task) => !answeredTaskIds.includes(task.id)).length
 
       setAvailableTasks(availableTasksCount)
     } catch (error) {
       console.error("Ошибка подсчета доступных заданий:", error)
+      // В случае ошибки показываем все активные задания
+      const supabase = supabaseClient()
+      const { data } = await supabase.from("tasks").select("id").eq("status", "active")
+      setAvailableTasks(data?.length || 0)
     }
   }
 
@@ -164,25 +182,31 @@ export default function MiniApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100">
       {screen === "main" && (
-        <div className="bg-white rounded-lg shadow p-6 max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-center mb-6">Миниап.Разметка</h1>
-          <p className="text-center mb-4">Добро пожаловать в приложение для разметки данных!</p>
-          <p className="text-center mb-6">
-            Доступно заданий: <span className="font-bold">{availableTasks}</span>
-          </p>
-          <div className="flex flex-col gap-4">
+        <div className="max-w-md mx-auto bg-white p-6 min-h-screen flex flex-col items-center justify-center">
+          <h1 className="text-3xl font-bold text-center mb-6">Миниап.Разметка</h1>
+
+          <p className="text-center mb-8 text-lg">Добро пожаловать в приложение для разметки данных!</p>
+
+          <div className="text-center mb-10">
+            <p className="text-xl">
+              Доступно заданий: <span className="font-bold">{availableTasks}</span>
+            </p>
+          </div>
+
+          <div className="w-full space-y-4">
             <button
               onClick={startLabeling}
               disabled={availableTasks === 0}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium disabled:bg-gray-400"
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white py-4 px-4 rounded-lg font-medium text-lg disabled:opacity-50"
             >
               Начать разметку
             </button>
+
             <button
               onClick={() => WebApp?.showAlert("Эта функция будет доступна в будущем")}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg font-medium"
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-4 px-4 rounded-lg font-medium text-lg"
             >
               Моя статистика
             </button>
