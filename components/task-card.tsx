@@ -1,6 +1,5 @@
 "use client"
 import { Clock, DollarSign } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 
 interface TaskCardProps {
   id: number
@@ -26,13 +25,16 @@ export function TaskCard({
   onClick,
 }: TaskCardProps) {
   return (
-    <div className="task-card" onClick={onClick}>
+    <div
+      className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white transition-all duration-200 hover:shadow-md"
+      onClick={onClick}
+    >
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-semibold text-gray-800">{title}</h3>
-          <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
+          <div className="bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 text-xs rounded-full">
             {complexity}
-          </Badge>
+          </div>
         </div>
         <p className="text-sm text-gray-600 mb-3">{description}</p>
         <div className="flex justify-between items-center text-sm text-gray-500">

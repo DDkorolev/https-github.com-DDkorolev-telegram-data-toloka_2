@@ -5,7 +5,7 @@ import { useTelegram } from "@/hooks/use-telegram"
 import { TaskCard } from "@/components/task-card"
 import { AudioWave } from "@/components/audio-wave"
 import { EmojiRating } from "@/components/emoji-rating"
-import { ArrowLeft, User, BarChart, CheckCircle } from "lucide-react"
+import { ArrowLeft, User, BarChart, CheckCircle, Home } from "lucide-react"
 
 // Имитация данных для разметки
 const mockTasks = [
@@ -55,7 +55,7 @@ const mockTasks = [
   },
 ]
 
-export default function Home() {
+export default function HomePage() {
   const [activeTab, setActiveTab] = useState("tasks")
   const [activeTaskId, setActiveTaskId] = useState<number | null>(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
@@ -134,24 +134,30 @@ export default function Home() {
         {activeTab === "tasks" && (
           <div className="space-y-6">
             <div className="text-center py-4">
-              <h2 className="points-display">{points.toLocaleString()} Pts</h2>
+              <h2 className="text-3xl font-bold text-blue-600">{points.toLocaleString()} Pts</h2>
             </div>
 
             <div className="flex justify-center space-x-2 mb-6">
               <button
-                className={`tab-button ${activeSubTab === "tasks" ? "active" : ""}`}
+                className={`px-4 py-2 font-medium rounded-lg ${
+                  activeSubTab === "tasks" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                }`}
                 onClick={() => setActiveSubTab("tasks")}
               >
                 Tasks
               </button>
               <button
-                className={`tab-button ${activeSubTab === "available" ? "active" : ""}`}
+                className={`px-4 py-2 font-medium rounded-lg ${
+                  activeSubTab === "available" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                }`}
                 onClick={() => setActiveSubTab("available")}
               >
                 Available
               </button>
               <button
-                className={`tab-button ${activeSubTab === "history" ? "active" : ""}`}
+                className={`px-4 py-2 font-medium rounded-lg ${
+                  activeSubTab === "history" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                }`}
                 onClick={() => setActiveSubTab("history")}
               >
                 History
@@ -171,14 +177,18 @@ export default function Home() {
             {activeTask.type === "image" && (
               <div className="space-y-6">
                 <div className="border rounded-xl overflow-hidden">
-                  <img src="/happy-golden-retriever.png" alt="Task image" className="w-full h-64 object-cover" />
+                  <img src="/golden-retriever.png" alt="Task image" className="w-full h-64 object-cover" />
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800">Is this a dog?</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <button className="action-button">Positive</button>
-                    <button className="secondary-button">Negative</button>
+                    <button className="bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                      Positive
+                    </button>
+                    <button className="bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                      Negative
+                    </button>
                   </div>
                 </div>
               </div>
@@ -196,8 +206,13 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-8">
-                  <button className="secondary-button">Previous</button>
-                  <button className="action-button" onClick={handleSubmitTask}>
+                  <button className="bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                    Previous
+                  </button>
+                  <button
+                    className="bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                    onClick={handleSubmitTask}
+                  >
                     Next
                   </button>
                 </div>
@@ -217,9 +232,15 @@ export default function Home() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800">What is the sentiment of this text?</h3>
                   <div className="grid grid-cols-3 gap-3">
-                    <button className="secondary-button">Negative</button>
-                    <button className="secondary-button">Neutral</button>
-                    <button className="action-button">Positive</button>
+                    <button className="bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                      Negative
+                    </button>
+                    <button className="bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                      Neutral
+                    </button>
+                    <button className="bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                      Positive
+                    </button>
                   </div>
                 </div>
 
@@ -229,8 +250,13 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-8">
-                  <button className="secondary-button">Previous</button>
-                  <button className="action-button" onClick={handleSubmitTask}>
+                  <button className="bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                    Previous
+                  </button>
+                  <button
+                    className="bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                    onClick={handleSubmitTask}
+                  >
                     Submit
                   </button>
                 </div>
@@ -243,7 +269,9 @@ export default function Home() {
       {/* Нижняя навигация */}
       <nav className="sticky bottom-0 bg-white border-t grid grid-cols-4 p-2">
         <button
-          className={`nav-button ${activeTab === "tasks" && activeSubTab === "tasks" ? "active" : ""}`}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeTab === "tasks" && activeSubTab === "tasks" ? "bg-blue-50 text-blue-600" : ""
+          }`}
           onClick={() => {
             setActiveTab("tasks")
             setActiveSubTab("tasks")
@@ -253,7 +281,9 @@ export default function Home() {
           <span className="text-xs">Home</span>
         </button>
         <button
-          className={`nav-button ${activeSubTab === "available" ? "active" : ""}`}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeSubTab === "available" ? "bg-blue-50 text-blue-600" : ""
+          }`}
           onClick={() => {
             setActiveTab("tasks")
             setActiveSubTab("available")
@@ -263,7 +293,9 @@ export default function Home() {
           <span className="text-xs">Tasks</span>
         </button>
         <button
-          className={`nav-button ${activeSubTab === "history" ? "active" : ""}`}
+          className={`flex flex-col items-center justify-center p-2 rounded-lg ${
+            activeSubTab === "history" ? "bg-blue-50 text-blue-600" : ""
+          }`}
           onClick={() => {
             setActiveTab("tasks")
             setActiveSubTab("history")
@@ -272,7 +304,7 @@ export default function Home() {
           <BarChart className="h-5 w-5" />
           <span className="text-xs">Stats</span>
         </button>
-        <button className="nav-button">
+        <button className="flex flex-col items-center justify-center p-2 rounded-lg">
           <User className="h-5 w-5" />
           <span className="text-xs">Profile</span>
         </button>

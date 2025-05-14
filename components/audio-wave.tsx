@@ -16,7 +16,7 @@ export function AudioWave({ isPlaying = false, onPlay, onPause }: AudioWaveProps
   }
 
   return (
-    <div className="audio-wave" onClick={handleTogglePlay}>
+    <div className="h-16 w-full bg-blue-50 rounded-lg flex items-center justify-center" onClick={handleTogglePlay}>
       <div className="flex items-center justify-center space-x-1">
         {Array.from({ length: 20 }).map((_, i) => {
           const height = Math.sin((i / 20) * Math.PI) * 40 + 10

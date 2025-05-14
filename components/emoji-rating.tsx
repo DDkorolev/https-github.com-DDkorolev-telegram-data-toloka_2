@@ -23,11 +23,13 @@ export function EmojiRating({ onRate }: EmojiRatingProps) {
   }
 
   return (
-    <div className="emoji-rating">
+    <div className="flex justify-between items-center mt-4">
       {emojis.map((emoji) => (
         <button
           key={emoji.value}
-          className={`emoji-button text-2xl ${selectedRating === emoji.value ? "active" : ""}`}
+          className={`p-2 rounded-full hover:bg-blue-50 transition-colors text-2xl ${
+            selectedRating === emoji.value ? "bg-blue-100" : ""
+          }`}
           onClick={() => handleRating(emoji.value)}
         >
           {emoji.emoji}
