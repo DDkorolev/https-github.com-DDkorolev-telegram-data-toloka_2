@@ -16,6 +16,13 @@ export default function Home() {
           </Link>
 
           <Link
+            href="/cabinet/login"
+            className="block w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium text-center"
+          >
+            Личный кабинет
+          </Link>
+
+          <Link
             href="/admin/login"
             className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg font-medium text-center"
           >
@@ -24,7 +31,7 @@ export default function Home() {
 
           <Link
             href="/check"
-            className="block w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium text-center"
+            className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium text-center"
           >
             Проверить настройки
           </Link>
