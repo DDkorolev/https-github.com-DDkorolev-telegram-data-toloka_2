@@ -26,7 +26,14 @@ export default function AdminLogin() {
         body: JSON.stringify({ username, password }),
       })
 
-      const data = await response.json()
+      // Проверяем, что ответ можно распарсить как JSON
+      let data
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        console.error("Ошибка парсинга JSON:", jsonError)
+        throw new Error(`Ошибка обработки ответа сервера: ${await response.text()}`)
+      }
 
       if (!response.ok) {
         throw new Error(data.message || "Ошибка авторизации")

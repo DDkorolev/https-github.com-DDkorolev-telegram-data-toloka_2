@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Ошибка входа:", error)
-    return NextResponse.json({ message: "Ошибка сервера" }, { status: 500 })
+    // Убедимся, что всегда возвращаем валидный JSON
+    return NextResponse.json({ message: "Ошибка сервера", error: String(error) }, { status: 500 })
   }
 }
