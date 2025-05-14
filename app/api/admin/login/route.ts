@@ -5,19 +5,19 @@ import { cookies } from "next/headers"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { username, password } = body
+    const { username } = body
 
-    if (!username || !password) {
-      return NextResponse.json({ message: "Логин и пароль обязательны" }, { status: 400 })
+    if (!username) {
+      return NextResponse.json({ message: "Логин обязателен" }, { status: 400 })
     }
 
-    console.log(`Попытка входа: ${username}/${password.substring(0, 1)}***`)
+    console.log(`Попытка входа: ${username}`)
 
-    const token = await authenticateAdmin(username, password)
+    const token = await authenticateAdmin(username)
 
     if (!token) {
       console.log("Аутентификация не удалась")
-      return NextResponse.json({ message: "Неверный логин или пароль" }, { status: 401 })
+      return NextResponse.json({ message: "Неверный логин" }, { status: 401 })
     }
 
     console.log("Аутентификация успешна, устанавливаем cookie")
