@@ -22,14 +22,15 @@ export async function POST(request: Request) {
 
     console.log("Аутентификация успешна, устанавливаем cookie")
 
-    // Устанавливаем cookie
+    // Устанавливаем cookie с улучшенными параметрами безопасности
     cookies().set({
       name: "admin_token",
       value: token,
       httpOnly: true,
       path: "/",
       maxAge: 60 * 60 * 24, // 24 часа
-      sameSite: "lax", // Изменено с "strict" на "lax" для лучшей совместимости
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production", // Secure в production
     })
 
     return NextResponse.json({ success: true })

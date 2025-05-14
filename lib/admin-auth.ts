@@ -3,10 +3,6 @@ import { supabaseServer } from "./supabase"
 import jwt from "jsonwebtoken"
 import { env } from "./env"
 
-// Хардкодированные учетные данные для разработки и тестирования
-const ADMIN_USERNAME = "admin"
-const ADMIN_PASSWORD = "admin123"
-
 // Изменяем функцию authenticateAdmin, чтобы она проверяла только логин
 export async function authenticateAdmin(username: string, password = "") {
   try {
@@ -19,12 +15,30 @@ export async function authenticateAdmin(username: string, password = "") {
       // Если админ не найден в базе, используем фиктивный ID
       const adminId = data?.id || 1
 
-      // Создаем токен
-      const token = jwt.sign({ id: adminId, username: username }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" })
+      // Создаем токен с дополнительной информацией для безопасности
+      const token = jwt.sign(
+        {
+          id: adminId,
+          username: username,
+          role: "admin",
+          iat: Math.floor(Date.now() / 1000),
+        },
+        env.ADMIN_JWT_SECRET,
+        {
+          expiresIn: "24h",
+          issuer: "miniapp-labeling",
+          audience: "admin-panel",
+        },
+      )
+
+      // Логируем успешный вход (в реальном приложении это должно быть в базе данных)
+      console.log(`Успешный вход администратора: ${username} в ${new Date().toISOString()}`)
 
       return token
     }
 
+    // Логируем неудачную попытку входа
+    console.log(`Неудачная попытка входа: ${username} в ${new Date().toISOString()}`)
     return null
   } catch (error) {
     console.error("Ошибка аутентификации:", error)
@@ -34,8 +48,13 @@ export async function authenticateAdmin(username: string, password = "") {
 
 export function verifyAdminToken(token: string) {
   try {
-    return jwt.verify(token, env.ADMIN_JWT_SECRET)
+    // Проверяем токен с дополнительными параметрами
+    return jwt.verify(token, env.ADMIN_JWT_SECRET, {
+      issuer: "miniapp-labeling",
+      audience: "admin-panel",
+    })
   } catch (error) {
+    console.error("Ошибка проверки токена:", error)
     return null
   }
 }
@@ -49,6 +68,11 @@ export async function protectAdminRoute(req: NextRequest) {
 
   const payload = verifyAdminToken(token)
   if (!payload) {
+    return NextResponse.redirect(new URL("/admin/login", req.url))
+  }
+
+  // Проверяем роль пользователя
+  if ((payload as any).role !== "admin") {
     return NextResponse.redirect(new URL("/admin/login", req.url))
   }
 

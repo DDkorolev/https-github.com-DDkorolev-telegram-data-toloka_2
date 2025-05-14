@@ -3,15 +3,29 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { BarChart2, Users, FileText, Settings, LogOut, AlertCircle, PieChart, Database } from "lucide-react"
 
 export default function AdminDashboard() {
   const [tasks, setTasks] = useState<any[]>([])
+  const [stats, setStats] = useState<{
+    totalTasks: number
+    totalUsers: number
+    totalResponses: number
+    completionRate: number
+  }>({
+    totalTasks: 0,
+    totalUsers: 0,
+    totalResponses: 0,
+    completionRate: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const router = useRouter()
 
   useEffect(() => {
-    fetchTasks()
+    Promise.all([fetchTasks(), fetchStats()]).finally(() => {
+      setLoading(false)
+    })
   }, [])
 
   const fetchTasks = async () => {
@@ -30,50 +44,21 @@ export default function AdminDashboard() {
       setTasks(data)
     } catch (error: any) {
       setError(error.message)
-    } finally {
-      setLoading(false)
     }
   }
 
-  const toggleTaskStatus = async (id: number, currentStatus: string) => {
+  const fetchStats = async () => {
     try {
-      const newStatus = currentStatus === "active" ? "hidden" : "active"
-
-      const response = await fetch(`/api/admin/tasks/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      const response = await fetch("/api/admin/stats")
 
       if (!response.ok) {
-        throw new Error("Ошибка обновления статуса")
+        throw new Error("Ошибка загрузки статистики")
       }
 
-      setTasks(tasks.map((task) => (task.id === id ? { ...task, status: newStatus } : task)))
+      const data = await response.json()
+      setStats(data)
     } catch (error: any) {
-      setError(error.message)
-    }
-  }
-
-  const deleteTask = async (id: number) => {
-    if (!confirm("Вы уверены, что хотите удалить это задание?")) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/admin/tasks/${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Ошибка удаления задания")
-      }
-
-      setTasks(tasks.filter((task) => task.id !== id))
-    } catch (error: any) {
-      setError(error.message)
+      console.error("Ошибка загрузки статистики:", error)
     }
   }
 
@@ -87,52 +72,148 @@ export default function AdminDashboard() {
   }
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Загрузка...</div>
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка данных...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-100">
+      {/* Боковая панель */}
+      <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800">Админ-панель</h2>
+          <p className="text-sm text-gray-500 mt-1">Миниап.Разметка</p>
+        </div>
+
+        <nav className="mt-6">
+          <Link href="/admin/dashboard" className="flex items-center px-6 py-3 bg-blue-500 text-white">
+            <BarChart2 className="h-5 w-5 mr-3" />
+            Дашборд
+          </Link>
+          <Link href="/admin/tasks" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+            <FileText className="h-5 w-5 mr-3" />
+            Задания
+          </Link>
+          <Link href="/admin/users" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+            <Users className="h-5 w-5 mr-3" />
+            Пользователи
+          </Link>
+          <Link href="/admin/settings" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+            <Settings className="h-5 w-5 mr-3" />
+            Настройки
+          </Link>
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <button
+            onClick={logout}
+            className="flex items-center justify-center w-full px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Выйти
+          </button>
+        </div>
+      </div>
+
+      {/* Основной контент */}
+      <div className="ml-64 p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Админ-панель</h1>
-          <div className="flex gap-4">
-            <Link href="/admin/tasks/new" className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
-              Добавить задание
-            </Link>
-            <button onClick={logout} className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-              Выйти
-            </button>
+          <h1 className="text-2xl font-bold">Панель управления</h1>
+          <div className="text-sm text-gray-500">Последнее обновление: {new Date().toLocaleString()}</div>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            {error}
+          </div>
+        )}
+
+        {/* Статистика */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Всего заданий</p>
+                <p className="text-2xl font-semibold">{stats.totalTasks}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Пользователей</p>
+                <p className="text-2xl font-semibold">{stats.totalUsers}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
+                <Database className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Всего ответов</p>
+                <p className="text-2xl font-semibold">{stats.totalResponses}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
+                <PieChart className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Выполнено</p>
+                <p className="text-2xl font-semibold">{stats.completionRate}%</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
-
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Инструкция
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Статус
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tasks.length === 0 ? (
+        {/* Последние задания */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-medium">Последние задания</h2>
+              <Link href="/admin/tasks" className="text-sm text-blue-500 hover:text-blue-700">
+                Смотреть все
+              </Link>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                    Нет доступных заданий
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Тип
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Инструкция
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Статус
+                  </th>
                 </tr>
-              ) : (
-                tasks.map((task) => (
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {tasks.slice(0, 5).map((task) => (
                   <tr key={task.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -148,37 +229,41 @@ export default function AdminDashboard() {
                         {task.status === "active" ? "Активно" : "Скрыто"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => toggleTaskStatus(task.id, task.status)}
-                          className={`${
-                            task.status === "active"
-                              ? "bg-yellow-500 hover:bg-yellow-600"
-                              : "bg-green-500 hover:bg-green-600"
-                          } text-white py-1 px-2 rounded text-xs`}
-                        >
-                          {task.status === "active" ? "Скрыть" : "Активировать"}
-                        </button>
-                        <Link
-                          href={`/admin/tasks/${task.id}/edit`}
-                          className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded text-xs"
-                        >
-                          Изменить
-                        </Link>
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded text-xs"
-                        >
-                          Удалить
-                        </button>
-                      </div>
-                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Быстрые действия */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium">Быстрые действия</h2>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              href="/admin/tasks/new"
+              className="flex items-center justify-center px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              Добавить задание
+            </Link>
+            <Link
+              href="/admin/users"
+              className="flex items-center justify-center px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              <Users className="h-5 w-5 mr-2" />
+              Управление пользователями
+            </Link>
+            <Link
+              href="/admin/settings"
+              className="flex items-center justify-center px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            >
+              <Settings className="h-5 w-5 mr-2" />
+              Настройки системы
+            </Link>
+          </div>
         </div>
       </div>
     </div>
