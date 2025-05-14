@@ -1,260 +1,281 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Clock, DollarSign, List, Settings, User } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useTelegram } from "@/hooks/use-telegram"
+import { TaskCard } from "@/components/task-card"
+import { AudioWave } from "@/components/audio-wave"
+import { EmojiRating } from "@/components/emoji-rating"
+import { ArrowLeft, User, BarChart, CheckCircle } from "lucide-react"
 
 // Имитация данных для разметки
 const mockTasks = [
   {
     id: 1,
-    title: "Классификация изображений",
-    description: "Определите, что изображено на картинке",
+    title: "Image Annotation (3/14)",
+    description: "Is this a dog?",
     reward: 5,
-    complexity: "Легкая",
-    estimatedTime: "1-2 мин",
+    complexity: "Easy",
+    estimatedTime: "1-2 min",
     available: 120,
     completed: 0,
-    type: "image",
+    type: "image" as const,
   },
   {
     id: 2,
-    title: "Проверка текста",
-    description: "Найдите ошибки в тексте",
+    title: "Text Classification",
+    description: "Classify this text by sentiment",
     reward: 3,
-    complexity: "Легкая",
-    estimatedTime: "1 мин",
+    complexity: "Easy",
+    estimatedTime: "1 min",
     available: 85,
     completed: 0,
-    type: "text",
+    type: "text" as const,
   },
   {
     id: 3,
-    title: "Аудио транскрипция",
-    description: "Запишите текст из аудиофайла",
+    title: "Audio Annotation (3/15)",
+    description: "What words is being spoken in this segment?",
     reward: 10,
-    complexity: "Средняя",
-    estimatedTime: "3-5 мин",
+    complexity: "Medium",
+    estimatedTime: "3-5 min",
     available: 45,
     completed: 0,
-    type: "audio",
+    type: "audio" as const,
   },
   {
     id: 4,
-    title: "Сегментация объектов",
-    description: "Выделите объекты на изображении",
+    title: "Image Classification",
+    description: "What does this sign say?",
     reward: 15,
-    complexity: "Сложная",
-    estimatedTime: "5-7 мин",
+    complexity: "Hard",
+    estimatedTime: "5-7 min",
     available: 30,
     completed: 0,
-    type: "image",
+    type: "image" as const,
   },
 ]
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("tasks")
-  const [user, setUser] = useState({
-    name: "Пользователь",
-    balance: 0,
-    completedTasks: 0,
-    level: "Новичок",
-    progress: 15,
-  })
-  const [telegramWebApp, setTelegramWebApp] = useState<any>(null)
+  const [activeTaskId, setActiveTaskId] = useState<number | null>(null)
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const [points, setPoints] = useState(20000)
+  const [completedTasks, setCompletedTasks] = useState(0)
+  const [activeSubTab, setActiveSubTab] = useState("tasks")
+
+  const { telegramApp, user } = useTelegram()
+
+  const activeTask = activeTaskId ? mockTasks.find((task) => task.id === activeTaskId) : null
+
+  const handleStartTask = (taskId: number) => {
+    setActiveTaskId(taskId)
+    setActiveTab("task-details")
+    telegramApp?.BackButton?.show()
+  }
+
+  const handleBackToTasks = () => {
+    setActiveTaskId(null)
+    setActiveTab("tasks")
+    telegramApp?.BackButton?.hide()
+  }
+
+  const handleSubmitTask = () => {
+    if (activeTask) {
+      setPoints(points + activeTask.reward)
+      setCompletedTasks(completedTasks + 1)
+      telegramApp?.HapticFeedback?.notificationOccurred("success")
+      handleBackToTasks()
+    }
+  }
 
   useEffect(() => {
-    // Инициализация Telegram Mini App
-    const tgApp = (window as any).Telegram?.WebApp
-    if (tgApp) {
-      tgApp.ready()
-      tgApp.expand()
-      setTelegramWebApp(tgApp)
+    if (telegramApp) {
+      telegramApp.BackButton.onClick(() => {
+        if (activeTab === "task-details") {
+          handleBackToTasks()
+        }
+      })
     }
-  }, [])
+  }, [telegramApp, activeTab])
 
   return (
     <main className="flex min-h-screen flex-col bg-gray-50">
       {/* Верхняя панель */}
-      <header className="sticky top-0 z-10 bg-white border-b p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-orange-500">ДатаТолока</h1>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="flex gap-1 items-center">
-            <DollarSign className="h-3 w-3" />
-            {user.balance} ₽
-          </Badge>
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </div>
-      </header>
+      {activeTab === "tasks" && (
+        <header className="sticky top-0 z-10 bg-white p-4 flex justify-between items-center border-b">
+          <div>
+            <h1 className="text-xl font-bold text-blue-600">Pits</h1>
+            <p className="text-sm text-gray-500">Home</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-2 rounded-full bg-gray-100">
+              <User className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+        </header>
+      )}
+
+      {activeTab === "task-details" && (
+        <header className="sticky top-0 z-10 bg-white p-4 flex justify-between items-center border-b">
+          <div className="flex items-center gap-2">
+            <button className="p-2 rounded-full bg-gray-100" onClick={handleBackToTasks}>
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">Start Task</h1>
+              <p className="text-sm text-gray-500">{activeTask?.title}</p>
+            </div>
+          </div>
+        </header>
+      )}
 
       {/* Основной контент */}
       <div className="flex-1 p-4">
-        <Tabs defaultValue="tasks" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsContent value="tasks" className="mt-0">
+        {activeTab === "tasks" && (
+          <div className="space-y-6">
+            <div className="text-center py-4">
+              <h2 className="points-display">{points.toLocaleString()} Pts</h2>
+            </div>
+
+            <div className="flex justify-center space-x-2 mb-6">
+              <button
+                className={`tab-button ${activeSubTab === "tasks" ? "active" : ""}`}
+                onClick={() => setActiveSubTab("tasks")}
+              >
+                Tasks
+              </button>
+              <button
+                className={`tab-button ${activeSubTab === "available" ? "active" : ""}`}
+                onClick={() => setActiveSubTab("available")}
+              >
+                Available
+              </button>
+              <button
+                className={`tab-button ${activeSubTab === "history" ? "active" : ""}`}
+                onClick={() => setActiveSubTab("history")}
+              >
+                History
+              </button>
+            </div>
+
             <div className="grid gap-4">
               {mockTasks.map((task) => (
-                <Card key={task.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-base">{task.title}</CardTitle>
-                      <Badge variant="secondary">{task.complexity}</Badge>
-                    </div>
-                    <CardDescription>{task.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 pb-2">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        <span>{task.reward} ₽</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{task.estimatedTime}</span>
-                      </div>
-                      <div>Доступно: {task.available}</div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="p-2 bg-gray-50">
-                    <Button className="w-full" variant="default" onClick={() => setActiveTab("task-details")}>
-                      Начать задание
-                    </Button>
-                  </CardFooter>
-                </Card>
+                <TaskCard key={task.id} {...task} onClick={() => handleStartTask(task.id)} />
               ))}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="task-details">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("tasks")}>
-                    Назад
-                  </Button>
-                  <Badge variant="outline" className="flex gap-1 items-center">
-                    <DollarSign className="h-3 w-3" />5 ₽
-                  </Badge>
-                </div>
-                <CardTitle className="mt-2">Классификация изображений</CardTitle>
-                <CardDescription>Выберите категорию, которая лучше всего описывает изображение</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-4">
-                  <div className="border rounded-md overflow-hidden">
-                    <img
-                      src="/placeholder.svg?height=300&width=400"
-                      alt="Изображение для классификации"
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline">Природа</Button>
-                    <Button variant="outline">Город</Button>
-                    <Button variant="outline">Люди</Button>
-                    <Button variant="outline">Животные</Button>
-                    <Button variant="outline">Еда</Button>
-                    <Button variant="outline">Другое</Button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => setActiveTab("tasks")}>
-                  Пропустить
-                </Button>
-                <Button
-                  onClick={() => {
-                    setUser({ ...user, balance: user.balance + 5, completedTasks: user.completedTasks + 1 })
-                    setActiveTab("tasks")
-                  }}
-                >
-                  Отправить
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>Профиль</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col items-center gap-2">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/placeholder.svg?height=80&width=80" alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <h2 className="text-xl font-semibold">{user.name}</h2>
-                  <Badge>{user.level}</Badge>
+        {activeTab === "task-details" && activeTask && (
+          <div className="space-y-6 py-4">
+            {activeTask.type === "image" && (
+              <div className="space-y-6">
+                <div className="border rounded-xl overflow-hidden">
+                  <img src="/happy-golden-retriever.png" alt="Task image" className="w-full h-64 object-cover" />
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>Прогресс до следующего уровня</span>
-                    <span>{user.progress}%</span>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Is this a dog?</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button className="action-button">Positive</button>
+                    <button className="secondary-button">Negative</button>
                   </div>
-                  <Progress value={user.progress} className="h-2" />
+                </div>
+              </div>
+            )}
+
+            {activeTask.type === "audio" && (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">What words is being spoken in this segment?</h3>
+                  <AudioWave
+                    isPlaying={isAudioPlaying}
+                    onPlay={() => setIsAudioPlaying(true)}
+                    onPause={() => setIsAudioPlaying(false)}
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="border rounded-md p-4 text-center">
-                    <p className="text-2xl font-bold">{user.completedTasks}</p>
-                    <p className="text-sm text-muted-foreground">Выполнено заданий</p>
-                  </div>
-                  <div className="border rounded-md p-4 text-center">
-                    <p className="text-2xl font-bold">{user.balance} ₽</p>
-                    <p className="text-sm text-muted-foreground">Баланс</p>
+                <div className="grid grid-cols-2 gap-3 mt-8">
+                  <button className="secondary-button">Previous</button>
+                  <button className="action-button" onClick={handleSubmitTask}>
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTask.type === "text" && (
+              <div className="space-y-6">
+                <div className="p-4 bg-white rounded-xl border">
+                  <p className="text-gray-800">
+                    This product is amazing! I've been using it for a month now and it has completely changed my
+                    workflow. The interface is intuitive and the features are exactly what I needed. Highly recommend to
+                    anyone looking for a solution like this.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">What is the sentiment of this text?</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button className="secondary-button">Negative</button>
+                    <button className="secondary-button">Neutral</button>
+                    <button className="action-button">Positive</button>
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full" onClick={() => alert("Функция вывода средств")}>
-                  Вывести средства
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-800">How would you rate this task?</h3>
+                  <EmojiRating onRate={(rating) => console.log("Rating:", rating)} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-8">
+                  <button className="secondary-button">Previous</button>
+                  <button className="action-button" onClick={handleSubmitTask}>
+                    Submit
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Нижняя навигация */}
-      <nav className="sticky bottom-0 bg-white border-t grid grid-cols-3 p-1">
-        <Button
-          variant={activeTab === "tasks" ? "default" : "ghost"}
-          className="flex flex-col items-center rounded-none h-16 gap-1"
-          onClick={() => setActiveTab("tasks")}
-        >
-          <List className="h-5 w-5" />
-          <span className="text-xs">Задания</span>
-        </Button>
-        <Button
-          variant={activeTab === "profile" ? "default" : "ghost"}
-          className="flex flex-col items-center rounded-none h-16 gap-1"
-          onClick={() => setActiveTab("profile")}
-        >
-          <User className="h-5 w-5" />
-          <span className="text-xs">Профиль</span>
-        </Button>
-        <Button
-          variant="ghost"
-          className="flex flex-col items-center rounded-none h-16 gap-1"
+      <nav className="sticky bottom-0 bg-white border-t grid grid-cols-4 p-2">
+        <button
+          className={`nav-button ${activeTab === "tasks" && activeSubTab === "tasks" ? "active" : ""}`}
           onClick={() => {
-            if (telegramWebApp) {
-              telegramWebApp.close()
-            }
+            setActiveTab("tasks")
+            setActiveSubTab("tasks")
           }}
         >
-          <Settings className="h-5 w-5" />
-          <span className="text-xs">Настройки</span>
-        </Button>
+          <Home className="h-5 w-5" />
+          <span className="text-xs">Home</span>
+        </button>
+        <button
+          className={`nav-button ${activeSubTab === "available" ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("tasks")
+            setActiveSubTab("available")
+          }}
+        >
+          <CheckCircle className="h-5 w-5" />
+          <span className="text-xs">Tasks</span>
+        </button>
+        <button
+          className={`nav-button ${activeSubTab === "history" ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("tasks")
+            setActiveSubTab("history")
+          }}
+        >
+          <BarChart className="h-5 w-5" />
+          <span className="text-xs">Stats</span>
+        </button>
+        <button className="nav-button">
+          <User className="h-5 w-5" />
+          <span className="text-xs">Profile</span>
+        </button>
       </nav>
     </main>
   )
