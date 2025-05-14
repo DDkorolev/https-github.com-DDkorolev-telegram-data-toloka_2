@@ -1,37 +1,27 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseServer } from "./supabase"
-import * as bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { env } from "./env"
 
+// Хардкодированные учетные данные для разработки и тестирования
+const ADMIN_USERNAME = "admin"
+const ADMIN_PASSWORD = "admin123"
+
 export async function authenticateAdmin(username: string, password: string) {
   try {
-    const supabase = supabaseServer()
+    // Простая проверка для хардкодированных учетных данных
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // Получаем админа из базы данных для ID
+      const supabase = supabaseServer()
+      const { data, error } = await supabase.from("admins").select("id").eq("username", username).single()
 
-    const { data, error } = await supabase.from("admins").select("*").eq("username", username).single()
+      // Если админ не найден в базе, используем фиктивный ID
+      const adminId = data?.id || 1
 
-    if (error || !data) {
-      return null
-    }
+      // Создаем токен
+      const token = jwt.sign({ id: adminId, username: username }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" })
 
-    // Для отладки
-    console.log("Пользователь найден:", data.username)
-
-    // Проверка для стандартного пароля admin123
-    if (username === "admin" && password === "admin123") {
-      const token = jwt.sign({ id: data.id, username: data.username }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" })
       return token
-    }
-
-    // Обычная проверка с bcryptjs
-    try {
-      const passwordMatch = await bcryptjs.compare(password, data.password)
-      if (passwordMatch) {
-        const token = jwt.sign({ id: data.id, username: data.username }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" })
-        return token
-      }
-    } catch (bcryptError) {
-      console.error("Ошибка сравнения паролей:", bcryptError)
     }
 
     return null

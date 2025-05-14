@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -18,6 +17,8 @@ export default function AdminLogin() {
     setError("")
 
     try {
+      console.log("Отправка запроса на вход...")
+
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: {
@@ -26,21 +27,27 @@ export default function AdminLogin() {
         body: JSON.stringify({ username, password }),
       })
 
+      console.log("Получен ответ:", response.status)
+
       // Проверяем, что ответ можно распарсить как JSON
       let data
       try {
-        data = await response.json()
+        const text = await response.text()
+        console.log("Текст ответа:", text)
+        data = JSON.parse(text)
       } catch (jsonError) {
         console.error("Ошибка парсинга JSON:", jsonError)
-        throw new Error(`Ошибка обработки ответа сервера: ${await response.text()}`)
+        throw new Error("Ошибка обработки ответа сервера")
       }
 
       if (!response.ok) {
         throw new Error(data.message || "Ошибка авторизации")
       }
 
+      console.log("Успешный вход, перенаправление...")
       router.push("/admin/dashboard")
     } catch (error: any) {
+      console.error("Ошибка входа:", error)
       setError(error.message)
     } finally {
       setLoading(false)
