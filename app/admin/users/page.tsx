@@ -63,6 +63,9 @@ export default function AdminUsers() {
       setGeneratingUsers(true)
       setError("")
 
+      // Проверяем, работаем ли мы в демо-режиме
+      const isDemoMode = localStorage.getItem("demo_mode") === "true"
+
       // Генерируем 10 тестовых пользователей
       const newUsers = Array.from({ length: 10 }, (_, i) => {
         const id = Date.now() + i
@@ -82,29 +85,40 @@ export default function AdminUsers() {
         }
       })
 
-      if (demoMode) {
+      if (isDemoMode) {
         // В демо-режиме сохраняем в localStorage
-        const updatedUsers = [...users, ...newUsers]
+        const existingUsers = localStorage.getItem("demo_users")
+        const updatedUsers = existingUsers ? [...JSON.parse(existingUsers), ...newUsers] : newUsers
+
         localStorage.setItem("demo_users", JSON.stringify(updatedUsers))
         setUsers(updatedUsers)
+        console.log("Пользователи сохранены в демо-режиме:", updatedUsers)
       } else {
-        // Используем Supabase для сохранения пользователей
-        const supabase = createClient()
+        try {
+          // Используем Supabase для сохранения пользователей
+          const supabase = createClient()
 
-        // Добавляем пользователей по одному
-        for (const user of newUsers) {
-          const { error } = await supabase.from("users").insert(user)
-          if (error) throw error
+          // Добавляем пользователей по одному
+          for (const user of newUsers) {
+            const { error } = await supabase.from("users").insert(user)
+            if (error) {
+              console.error("Ошибка при добавлении пользователя:", error)
+              throw error
+            }
+          }
+
+          // Обновляем список пользователей
+          fetchUsers()
+        } catch (error) {
+          console.error("Ошибка при работе с Supabase:", error)
+          throw new Error("Ошибка при сохранении пользователей в базу данных")
         }
-
-        // Обновляем список пользователей
-        fetchUsers()
       }
 
       alert("Успешно создано 10 тестовых пользователей")
     } catch (error: any) {
       console.error("Ошибка при создании тестовых пользователей:", error)
-      setError("Не удалось создать тестовых пользователей")
+      setError(error.message || "Не удалось создать тестовых пользователей")
     } finally {
       setGeneratingUsers(false)
     }

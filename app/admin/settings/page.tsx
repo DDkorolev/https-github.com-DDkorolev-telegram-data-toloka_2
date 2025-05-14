@@ -26,6 +26,60 @@ export default function AdminSettings() {
     const newDemoMode = !demoMode
     setDemoMode(newDemoMode)
     localStorage.setItem("demo_mode", newDemoMode.toString())
+
+    // Если включаем демо-режим, инициализируем демо-данные
+    if (newDemoMode) {
+      // Инициализируем демо-пользователей, если их нет
+      if (!localStorage.getItem("demo_users")) {
+        const initialUsers = [
+          {
+            id: 1,
+            login: "test_user",
+            password: "password",
+            name: "Тестовый пользователь",
+            created_at: new Date().toISOString(),
+            completed_tasks: 0,
+            accuracy: 0,
+            last_login: null,
+          },
+        ]
+        localStorage.setItem("demo_users", JSON.stringify(initialUsers))
+      }
+
+      // Инициализируем демо-задания, если их нет
+      if (!localStorage.getItem("demo_tasks")) {
+        const initialTasks = [
+          {
+            id: 1,
+            type: "text",
+            question: "Москва является столицей России.",
+            content: "Москва является столицей России.",
+            correct_answer: true,
+            status: "active",
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 2,
+            type: "text",
+            question: "Земля вращается вокруг Солнца.",
+            content: "Земля вращается вокруг Солнца.",
+            correct_answer: true,
+            status: "active",
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 3,
+            type: "image",
+            question: "На изображении кошка?",
+            content: "/tabby-cat-sunbeam.png",
+            correct_answer: true,
+            status: "active",
+            created_at: new Date().toISOString(),
+          },
+        ]
+        localStorage.setItem("demo_tasks", JSON.stringify(initialTasks))
+      }
+    }
   }
 
   const clearDemoData = () => {
