@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { BarChart2, Users, FileText, Settings, LogOut, AlertCircle, PieChart, Database } from "lucide-react"
+import { BarChart2, Users, FileText, Settings, LogOut, AlertCircle, PieChart, Database, ImageIcon } from "lucide-react"
 
 export default function AdminDashboard() {
   const [tasks, setTasks] = useState<any[]>([])
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium">Быстрые действия</h2>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <Link
               href="/admin/tasks/new"
               className="flex items-center justify-center px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -262,8 +262,15 @@ export default function AdminDashboard() {
               Управление пользователями
             </Link>
             <Link
-              href="/admin/settings"
+              href="/admin/image-recognition"
               className="flex items-center justify-center px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            >
+              <ImageIcon className="h-5 w-5 mr-2" />
+              Тестирование распознавания
+            </Link>
+            <Link
+              href="/admin/settings"
+              className="flex items-center justify-center px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
             >
               <Settings className="h-5 w-5 mr-2" />
               Настройки системы
